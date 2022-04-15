@@ -22,104 +22,71 @@ from lib.loadmap import loadmap
 from math import pi, sin, cos
 from time import perf_counter
 
+detector = ObjectDetector()
 
-def getTagPos(H_t0_c, H_ti_c):
-    """
-        input: 4x4 matrix - tag i frame with respect to camera frame
-        output: 4x4 matrix - tag i box's center frame with respect to world frame
-    """
-
-    H_t0_w = np.array([
-        [1, 0, 0, -0.500],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1],
-    ])
-
-    H_tic_ti = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, -0.025],  # half of the box side length
-        [0, 0, 0, 1],
-    ])
-
-    H_tic_w = H_t0_w @ np.linalg.inv(H_t0_c) @ H_ti_c @ H_tic_ti
-    # print(H_tic_w)
-
-    return H_tic_w
+class Tag:
 
 
-if __name__ == "__main__":
+    def __init__(self):
+        
+        self.H_t0_w = np.array([
+            [1, 0, 0, -0.500],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ])
 
-    try:
-        team = rospy.get_param("team")  # 'red' or 'blue'
-    except KeyError:
-        print('Team must be red or blue - make sure you are running final.launch!')
-        exit()
+        self.H_tic_ti = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, -0.025],  # half of the box side length
+            [0, 0, 0, 1],
+        ])
 
-    rospy.init_node("team_script")
-    arm = ArmController()
-    detector = ObjectDetector()
 
-    arm.safe_move_to_position(arm.neutral_position())  # on your mark!
+    def getTagCenterPos(self, H_t0_c, H_ti_c):
+        """
+            input: 4x4 matrix - tag i frame with respect to camera frame
+            output: 4x4 matrix - tag i box's center frame with respect to world frame
+        """
 
-    print("\n****************")
-    if team == 'blue':
-        print("** BLUE TEAM  **")
-    else:
-        print("**  RED TEAM  **")
-    print("****************")
-    input("\nWaiting for start... Press ENTER to begin!\n")  # get set!
-    print("Go!\n")  # go!
+        H_tic_w = self.H_t0_w @ np.linalg.inv(H_t0_c) @ H_ti_c @ self.H_tic_ti
+        # print(H_tic_w)
 
-    # STUDENT CODE HERE
+        return H_tic_w
 
-    # 1 - get centers of boxes
 
-    H_tic_w = []
-    H_name = []
+    def get_H_t0_c(self):
+        """
+            get H_t0_c
+        """
 
-    for (name, pose) in detector.get_detections():
-        H_tic_w.append(getTagPos(detector.get_detections()[0][1], pose))  # H_tic_w[0] is not usable!
-        H_name.append(name)
+        H_t0_c = []
 
-    print("H_tic_w = {}".format(H_tic_w))
-    print("H_name = {}".format(H_name))
+        for (name, pose) in detector.get_detections(): 
+            if name == "tag0":
+                H_t0_c = pose
+                print("H_t0_c = {}".format(H_t0_c))
+                break
 
-    # 2 - ik_solver() test
+        return H_t0_c
 
-    ik = IK()
 
-    H_rot_z = np.array([
-        [1, 0, 0, 0],
-        [0, -1, 0, 0],
-        [0, 0, -1, 0],
-        [0, 0, 0, 1],
-    ])
+    def get_tag_data(self, H_t0_c):
+        """
+            get tag_name & H_ti_c & H_tic_w
+        """
 
-    target = H_tic_w[2] @ H_rot_z
-    seed = arm.neutral_position()  # use neutral configuration as seed
+        tag_name = []
+        H_ti_c = []
+        H_tic_w = []
 
-    start = perf_counter()
-    q, success, rollout = ik.inverse(target, seed)
-    stop = perf_counter()
-    dt = stop - start
+        for (name, pose) in detector.get_detections():
+            print("H_name c = {}".format(name))
+            print("pose c = {}".format(pose))
+            tag_name.append(name)
+            H_ti_c.append(pose)
+            H_tic_w.append(self.getTagCenterPos(H_t0_c, pose))
 
-    if success:
-        print("Solution found in {time:2.2f} seconds ({it} iterations).".format(time=dt, it=len(rollout)))
-        # arm.safe_move_to_position(q)
-    else:
-        print('IK Failed for this target using this seed.')
+        return tag_name, H_ti_c, H_tic_w
 
-    # 3 execute grip test
-
-    arm.open_gripper()  # open gripper
-    arm.safe_move_to_position(q)  # ik_solver()
-    arm.exec_gripper_cmd(0.05, 10)
-
-    arm.safe_move_to_position(seed)  # ik_solver()
-
-    # Move around...
-    # arm.safe_move_to_position(arm.neutral_position() + .1)
-
-    # END STUDENT CODE

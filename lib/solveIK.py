@@ -285,7 +285,7 @@ class IK:
             project_dq_center = np.dot(dq_center, n) * (n / np.square(np.linalg.norm(n)))
             # print(np.linalg.norm(n))
 
-            dq = dq_ik + project_dq_center
+            dq = (dq_ik + project_dq_center*2)*0.08
 
             # 2 Termination Conditions
 
@@ -296,8 +296,10 @@ class IK:
                 break  # exit the while loop if conditions are met!
 
             # END STUDENT CODE
-
+            
             q = q + dq
+            
+            
 
         success = self.is_valid_solution(q, target)
         return q, success, rollout

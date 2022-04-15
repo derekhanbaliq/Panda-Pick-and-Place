@@ -145,7 +145,7 @@ class Movement:
             x = (T0e[0:3, 3])
 
             # First Order Integrator, Proportional Control with Feed Forward
-            kp = 5
+            kp = 3
             v = vdes + kp * (xdes - x)
 
             # Velocity Inverse Kinematics
