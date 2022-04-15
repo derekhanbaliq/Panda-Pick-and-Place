@@ -52,10 +52,6 @@ if __name__ == "__main__":
 
     # 1 - get centers of boxes
 
-    tag_name = []
-    H_ti_c = []
-    H_tic_w = []
-
     tag = Tag()
 
     # get H_t0_c
@@ -64,9 +60,9 @@ if __name__ == "__main__":
 
     # get all data of tags
     tag_name, H_ti_c, H_tic_w = tag.get_tag_data(H_t0_c)
-
     # print("*" * 100)
     # print("H_name = {}".format(tag_name))
+    # print("H_ti_c = {}".format(H_ti_c))
     # print("H_tic_w = {}".format(H_tic_w))
     
     # 2 move up

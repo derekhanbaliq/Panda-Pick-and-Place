@@ -22,13 +22,17 @@ from lib.loadmap import loadmap
 from math import pi, sin, cos
 from time import perf_counter
 
+# instantiated object!
 detector = ObjectDetector()
+
 
 class Tag:
 
-
     def __init__(self):
-        
+        """
+            H_t0_w & H_tic_ti: only used in get_H_t0_c()
+        """
+
         self.H_t0_w = np.array([
             [1, 0, 0, -0.500],
             [0, 1, 0, 0],
@@ -43,6 +47,20 @@ class Tag:
             [0, 0, 0, 1],
         ])
 
+    def get_H_t0_c(self):
+        """
+            get H matrix of tag 0 with respect to camera frame
+        """
+
+        H_t0_c = []
+
+        for (name, pose) in detector.get_detections():
+            if name == "tag0":
+                H_t0_c = pose
+                print("H_t0_c = {}".format(H_t0_c))
+                break
+
+        return H_t0_c
 
     def getTagCenterPos(self, H_t0_c, H_ti_c):
         """
@@ -54,23 +72,6 @@ class Tag:
         # print(H_tic_w)
 
         return H_tic_w
-
-
-    def get_H_t0_c(self):
-        """
-            get H_t0_c
-        """
-
-        H_t0_c = []
-
-        for (name, pose) in detector.get_detections(): 
-            if name == "tag0":
-                H_t0_c = pose
-                print("H_t0_c = {}".format(H_t0_c))
-                break
-
-        return H_t0_c
-
 
     def get_tag_data(self, H_t0_c):
         """
@@ -89,4 +90,3 @@ class Tag:
             H_tic_w.append(self.getTagCenterPos(H_t0_c, pose))
 
         return tag_name, H_ti_c, H_tic_w
-
