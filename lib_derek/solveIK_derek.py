@@ -7,21 +7,13 @@ from lib.calcJacobian import calcJacobian
 from lib.IK_velocity import IK_velocity
 
 
-from core.interfaces import ArmController
-
-
-# arm = ArmController()
-
-
 class IK:
     # JOINT LIMITS
     lower = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
     upper = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
 
     center = lower + (upper - lower) / 2  # compute middle of range of motion of each joint
-
     fk = FK()
-    # arm = ArmController()
 
     def __init__(self, linear_tol=1e-4, angular_tol=1e-3, max_steps=500, min_step_size=1e-5):
         """
@@ -297,7 +289,7 @@ class IK:
             project_dq_center = np.dot(dq_center, n) * (n / np.square(np.linalg.norm(n)))
             # print(np.linalg.norm(n))
 
-            dq = 0.5 * (dq_ik + 2 * project_dq_center)
+            dq = 0.08 * (dq_ik + 2 * project_dq_center)
 
             # 2 Termination Conditions
 
@@ -312,18 +304,13 @@ class IK:
             q = q + dq
 
             # 2π revision
-            for i in range(7):
-                # while lower_limit[i] > q[i]:
-                #     print("q[i] is too small! - {}".format(q[i]))
-                #     q[i] = q[i] + 2 * pi
-                # while upper_limit[i] < q[i]:
-                #     print("q[i] is too large! - {}".format(q[i]))
-                #     q[i] = q[i] - 2 * pi
-                if lower_limit[i] > q[i] or upper_limit[i] < q[i]:
-                    q = np.array([0, 0, 0, -pi / 2, 0, pi / 2, pi / 4])
-                    cnt = 0
-                    print("Failed seed has changed to neutral pos seed, try it again!")
-                    break
+            # for i in range(7):
+            #     while lower_limit[i] > q[i]:
+            #         print("q[i] is too small! - {}".format(q[i]))
+            #         q[i] = q[i] + 2 * pi
+            #     while upper_limit[i] < q[i]:
+            #         print("q[i] is too large! - {}".format(q[i]))
+            #         q[i] = q[i] - 2 * pi
 
         success = self.is_valid_solution(q, target)
         return q, success, rollout
