@@ -138,10 +138,14 @@ class Tag:
 
         return H_rot
 
-    def get_H_twr_w(self, tag_name, i):
+    def get_H_twr_w(self, team, tag_name, i):
         """
             tower & rotate to standard parallel direction?
         """
+
+        isRed = 1
+        if team == 'blue':
+            isRed = -1
 
         H_twr_w = np.identity(4)
 
@@ -152,7 +156,7 @@ class Tag:
             print("side case!")
             H_twr_w = np.array([  # define tower placement height
                 [0, 1, 0, .562],
-                [0, 0, 1, .169],
+                [0, 0, 1, isRed * .169],
                 [1, 0, 0, .2 + 0.005 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])
@@ -161,7 +165,7 @@ class Tag:
             print("down case! - TBD too!!!!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
-                [0, -1, 0, .169],
+                [0, -1, 0, isRed * .169],
                 [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])
@@ -170,7 +174,7 @@ class Tag:
             print("up case!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
-                [0, -1, 0, .169],
+                [0, -1, 0, isRed * .169],
                 [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])

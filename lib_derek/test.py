@@ -44,7 +44,7 @@ def my_ik_move(target, seed):
     return q  # return the q as a backup for further use
 
 
-def pick_and_place_tag6(H_tic_w, i):
+def pick_and_place_tag6(team, H_tic_w, i):
     """
         compulsorily pick and place as tag6 with white face up
     """
@@ -65,7 +65,7 @@ def pick_and_place_tag6(H_tic_w, i):
     arm.safe_move_to_position(q_static_up)  # ik_solver() back to static-up
 
     # 5 - go to tower-up
-    H_twr_w = tag.get_H_twr_w("tag6", i)  # real height
+    H_twr_w = tag.get_H_twr_w(team, "tag6", i)  # real height
     target = H_twr_w @ tag.get_H_twrUp("tag6")  # to tower & white face up -> to tower up
     q_tower_up = my_ik_move(target, q_static_up)
 
@@ -78,7 +78,7 @@ def pick_and_place_tag6(H_tic_w, i):
     arm.safe_move_to_position(q_tower_up)
 
 
-def pick_and_place_tagx(tag_name, H_tic_w, i):
+def pick_and_place_tagx(team, tag_name, H_tic_w, i):
     # 2 - open gripper & move to static-up
     arm.open_gripper()
     H_rot = tag.get_H_staticRot(tag_name)  # deal with the white faucet side case by case
@@ -96,7 +96,7 @@ def pick_and_place_tagx(tag_name, H_tic_w, i):
     arm.safe_move_to_position(q_static_up)  # ik_solver() back to static-up
 
     # 5 - go to tower-up
-    H_twr_w = tag.get_H_twr_w(tag_name, i)  # real height
+    H_twr_w = tag.get_H_twr_w(team, tag_name, i)  # real height
     target = H_twr_w @ tag.get_H_twrUp(tag_name)  # to tower & white face up -> to tower up
     q_tower_up = my_ik_move(target, q_static_up)
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
             flag = False
             for j in range(len(tag_name)):
                 if tag_name[j] == "tag5":
-                    pick_and_place_tag6(H_tic_w[j], 0)
+                    pick_and_place_tag6(team, H_tic_w[j], 0)
                     tag_name.pop(j)
                     H_tic_w.pop(j)
                     flag = True
@@ -161,22 +161,36 @@ if __name__ == "__main__":
             if flag is False:
                 for j in range(len(tag_name)):
                     if tag_name[j] == "tag6":
-                        pick_and_place_tag6(H_tic_w[j], 0)
+                        pick_and_place_tag6(team, H_tic_w[j], 0)
                         tag_name.pop(j)
                         H_tic_w.pop(j)
                         flag = True
                         break
             if flag is False:
-                pick_and_place_tag6(H_tic_w[0], 0)
+                pick_and_place_tag6(team, H_tic_w[0], 0)
                 tag_name.pop(0)
                 H_tic_w.pop(0)
                 flag = True
             continue
+            # flag = False
+            # for j in range(len(tag_name)):
+            #     if tag_name[j] == "tag6":
+            #         pick_and_place_tag6(team, H_tic_w[j], 0)
+            #         tag_name.pop(j)
+            #         H_tic_w.pop(j)
+            #         flag = True
+            #         break
+            # if flag is False:
+            #     pick_and_place_tag6(team, H_tic_w[0], 0)
+            #     tag_name.pop(0)
+            #     H_tic_w.pop(0)
+            #     flag = True
+            # continue
 
         if tag_name[i] == "tag1" or tag_name[i] == "tag2" or tag_name[i] == "tag3" or tag_name[i] == "tag4" or \
                 tag_name[i] == "tag5" or tag_name[i] == "tag6":
             print("static pick & place!")
-            pick_and_place_tagx(tag_name[i], H_tic_w[i], i)
+            pick_and_place_tagx(team, tag_name[i], H_tic_w[i], i)
 
         elif tag_name[i] == "tag7" or tag_name[i] == "tag8" or tag_name[i] == "tag9" or tag_name[i] == "tag10" or \
                 tag_name[i] == "tag11" or tag_name[i] == "tag12":
