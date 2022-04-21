@@ -45,50 +45,44 @@ def my_ik_move(target, seed):
     return q  # return the q as a backup for further use
 
 
-def dynamic_pick_and_place(tag_name, i):
+def dynamic_pick_and_place(team, tag_name, i):
     print("inside dynamic pick and place")
-    
+    if team == "red":
+        H_sweep = np.array([
+            [0, 0, -1, 0],
+            [0, -1, 0, 0.73],
+            [-1, 0, 0, 0.225],
+            [0, 0, 0, 1]
+        ])
+        seed = np.array([ 0.95148562 , 1.17466788 , 0.58635499 ,-1.05438613 , 0.93178158 , 1.5359424 , 1.85779167])
+
+    if team == "blue":
+        H_sweep = np.array([
+            [0, 0, 1, 0],
+            [0, -1, 0, -0.73],
+            [1, 0, 0, 0.225],
+            [0, 0, 0, 1]
+        ])
+        seed = np.array([-0.03222569 ,-1.16041228 ,-1.83640442 ,-2.1817086 ,  0.42630637 , 1.99819784,-1.27256441])
+        seed_twr = np.array([-0.86048895, 0.4852505, 0.26522349, -1.3501621, 1.28036102, 0.99785097, -1.08143])
+
+        #seed = arm.neutral_position()
+
     # 1 - go to the plate
     arm.open_gripper()
-    H_rot = tag.get_H_staticRot(tag_name)  # deal with the white faucet side case by case
+    H_rot = tag.get_H_staticRot(team, tag_name)  # deal with the white faucet side case by case
     target = H_rot # sweep start position
-    seed = arm.neutral_position()  # use neutral configuration as seed
+
     q_dynamic_1 = my_ik_move(target, seed)
     print("q_ready:\n", q_dynamic_1)
     # 2 - sweep H
-    #red team
-    H_sweep = np.array([
-        [0, 0, -1, 0],
-        [0, -1, 0, 0.73],
-        [-1, 0, 0, 0.225],
-        [0, 0, 0, 1]
-    ]) 
-    """
-    @ np.array([[math.cos(pi/9), 0, math.sqrt(pi/9), 0],
-        [0, 1, 0, 0],
-        [-math.sin(pi/9), 0, math.cos(pi/9), 0],
-        [0,0,0, 1]
-    ]) 
-    """
-    """
-    # blue team
-    H_sweep = np.array([
-        [0, 0, -1, -0.03],
-        [0, 1, 0, -.04],
-        [1, 0, 0, 0.3],
-        [0, 0, 0, 1]
-    ]) @ np.array([[math.cos(pi/90), 0, math.sqrt(pi/90), 0],
-        [0, 1, 0, 0],
-        [-math.sin(pi/90), 0, math.cos(pi/90), 0],
-        [0,0,0, 1]
-    ]) 
-    """
+
     # 3 - sweep on the plate to the sweep stop position
     target_sweep = H_sweep
-    q_dynamic_2 = my_ik_move(target_sweep, q_dynamic_1)
+    q_dynamic_2 = my_ik_move(target_sweep, seed)
     print("q_catch:\n", q_dynamic_2)
     # 4 - catch and back to static-up
-    
+
     arm.exec_gripper_cmd(0.045, 20)
     """
     gripped = False
@@ -97,13 +91,13 @@ def dynamic_pick_and_place(tag_name, i):
             arm.exec_gripper_cmd(0.045, 20)
         else:
             gripped = True
-    """      
+    """
     #arm.safe_move_to_position(q_static_up)  # ik_solver() back to static-up
 
     # 5 - go to tower-up
-    H_twr_w = tag.get_H_twr_w(tag_name, i)  # real height
+    H_twr_w = tag.get_H_twr_w(team, tag_name, i)  # real height
     target = H_twr_w @ tag.get_H_twrUp(tag_name)  # to tower & white face up -> to tower up
-    q_tower_up = my_ik_move(target, q_dynamic_2)
+    q_tower_up = my_ik_move(target, seed_twr)
 
     # 6 - line down & place
     target = H_twr_w
@@ -112,8 +106,6 @@ def dynamic_pick_and_place(tag_name, i):
     # 7 - place and back to tower-up
     arm.open_gripper()  # open gripper
     arm.safe_move_to_position(q_tower_up)
-    
-    
 
 
 def pick_and_place_tag6(H_tic_w, i):
@@ -122,7 +114,7 @@ def pick_and_place_tag6(H_tic_w, i):
     """
     # 2 - open gripper & move to static-up
     arm.open_gripper()
-    H_rot = tag.get_H_staticRot("tag6")  # deal with the white faucet side case by case
+    H_rot = tag.get_H_staticRot(team, "tag6")  # deal with the white faucet side case by case
     target = H_tic_w @ H_rot @ tag.H_upc_tic
     seed = arm.neutral_position()  # use neutral configuration as seed
     q_static_up = my_ik_move(target, seed)
@@ -137,7 +129,7 @@ def pick_and_place_tag6(H_tic_w, i):
     arm.safe_move_to_position(q_static_up)  # ik_solver() back to static-up
 
     # 5 - go to tower-up
-    H_twr_w = tag.get_H_twr_w("tag6", i)  # real height
+    H_twr_w = tag.get_H_twr_w(team, "tag6", i)  # real height
     target = H_twr_w @ tag.get_H_twrUp("tag6")  # to tower & white face up -> to tower up
     q_tower_up = my_ik_move(target, q_static_up)
 
@@ -151,7 +143,7 @@ def pick_and_place_tag6(H_tic_w, i):
 
 def pick_and_rotate_tag5(H_tic_w,i):
     arm.open_gripper()
-    H_rot = tag.get_H_staticRot("tag5")
+    H_rot = tag.get_H_staticRot(team, "tag5")
     target = H_tic_w @ H_rot
     seed = arm.neutral_position()  # use neutral configuration as seed
     q_static_up = my_ik_move(target, seed)
@@ -208,7 +200,7 @@ def pick_and_rotate_tag5(H_tic_w,i):
 def pick_and_place_tagx(tag_name, H_tic_w, i):
     # 2 - open gripper & move to static-up
     arm.open_gripper()
-    H_rot = tag.get_H_staticRot(tag_name)  # deal with the white faucet side case by case
+    H_rot = tag.get_H_staticRot(team, tag_name)  # deal with the white faucet side case by case
     target = H_tic_w @ H_rot @ tag.H_upc_tic
     seed = arm.neutral_position()  # use neutral configuration as seed
     q_static_up = my_ik_move(target, seed)
@@ -223,7 +215,7 @@ def pick_and_place_tagx(tag_name, H_tic_w, i):
     arm.safe_move_to_position(q_static_up)  # ik_solver() back to static-up
 
     # 5 - go to tower-up
-    H_twr_w = tag.get_H_twr_w(tag_name, i)  # real height
+    H_twr_w = tag.get_H_twr_w(team, tag_name, i)  # real height
     target = H_twr_w @ tag.get_H_twrUp(tag_name)  # to tower & white face up -> to tower up
     q_tower_up = my_ik_move(target, q_static_up)
 
@@ -301,7 +293,7 @@ if __name__ == "__main__":
                 H_tic_w.pop(0)
                 flag = True
             continue
-        
+
         if tag_name[i] == "tag1" or tag_name[i] == "tag2" or tag_name[i] == "tag3" or tag_name[i] == "tag4" or \
                 tag_name[i] == "tag5" or tag_name[i] == "tag6":
             print("static pick & place!")
@@ -318,7 +310,7 @@ if __name__ == "__main__":
             if flag is False:
                 for j in range(len(tag_name)):
                     if tag_name[j] == "tag7" or tag_name[j] == "tag8" or tag_name[j] == "tag9" or tag_name[j] == "tag10" or tag_name[j] == "tag11" or tag_name[j] == "tag12":
-                        dynamic_pick_and_place(tag_name[j], 0)
+                        dynamic_pick_and_place(team, tag_name[j], 0)
                         tag_name.pop(j)
                         H_tic_w.pop(j)
                         flag = True

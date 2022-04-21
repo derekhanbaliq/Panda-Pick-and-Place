@@ -100,7 +100,7 @@ class Tag:
 
         return tag_name, H_tic_w
 
-    def get_H_staticRot(self, tag_name):
+    def get_H_staticRot(self,team, tag_name):
         """
             deal with the white face side case by case
         """
@@ -164,20 +164,29 @@ class Tag:
 
         elif tag_name == "tag7" or tag_name == "tag8" or tag_name == "tag9" or tag_name == "tag10" or tag_name == "tag11" or tag_name == "tag12":
             print("Dynamic Block case!")
-
+            if team == "red":
             # red team
-            H_rot = np.array([
-                [0, 0, -1, 0],
-                [0, -1, 0, 0.5],
-                [-1, 0, 0, 0.225],
-                [0, 0, 0, 1]
-            ]) 
+                H_rot = np.array([
+                    [0, 0, -1, 0],
+                    [0, -1, 0, 0.5],
+                    [-1, 0, 0, 0.25],
+                    [0, 0, 0, 1]
+                ])
+            if team == "blue":
+            # blue team
+                H_rot = np.array([
+                    [0, 0, 1, 0],
+                    [0, -1, 0, -0.5],
+                    [1, 0, 0, 0.25],
+                    [0, 0, 0, 1]
+                ])
+
             """
             @ np.array([[math.cos(pi/9), 0, math.sqrt(pi/9), 0],
                 [0, 1, 0, 0],
                 [-math.sin(pi/9), 0, math.cos(pi/9), 0],
                 [0,0,0, 1]
-            ]) 
+            ])
             """
             """
             # blue team
@@ -190,11 +199,11 @@ class Tag:
                 #[0, 1, 0, 0],
                 #[-math.sin(pi/9), 0, math.cos(pi/9), 0],
                 #[0,0,0, 1]
-            #]) 
+            #])
             """
         return H_rot
 
-    def get_H_twr_w(self, tag_name, i):
+    def get_H_twr_w(self, team, tag_name, i):
         """
             tower & rotate to standard parallel direction?
         """
@@ -230,15 +239,26 @@ class Tag:
                 [0, 0, -1, .2  + (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
-      
+
         elif tag_name == "tag7" or tag_name == "tag8" or tag_name == "tag9" or tag_name == "tag10" or tag_name == "tag11" or tag_name == "tag12":
             print("up case!")
-            H_twr_w = np.array([  # define tower placement height
-                [0, 1, 0, .562],
-                [0, 0, 1, .169],
-                [1, 0, 0, .2  + (i + 1) * 0.05 - 0.015],
-                [0, 0, 0, 1],
-            ])
+            #if team == "red":
+            if team == "red":
+                H_twr_w = np.array([  # define tower placement height
+                    [0, -1, 0, .562],
+                    [0, 0, 1, -.169],
+                    [-1, 0, 0, .2  + (i + 1) * 0.05 - 0.015],
+                    [0, 0, 0, 1],
+                ])
+
+            if team == "blue":
+                H_twr_w = np.array([  # define tower placement height
+                    [0, 1, 0, .562],
+                    [0, 0, 1, -.169],
+                    [1, 0, 0, .2  + (i + 1) * 0.05 - 0.015],
+                    [0, 0, 0, 1],
+                ])
+
 
         return H_twr_w
 
@@ -282,7 +302,7 @@ class Tag:
         elif tag_name == "tag7" or tag_name == "tag8" or tag_name == "tag9" or tag_name == "tag10" or tag_name == "tag11" or tag_name == "tag12":
             print("side case!")
             H_twrUp = np.array([
-                [1, 0, 0, 0.2],
+                [1, 0, 0, -0.2],
                 [0, 1, 0, 0],
                 [0, 0, 1, 0],
                 [0, 0, 0, 1],
