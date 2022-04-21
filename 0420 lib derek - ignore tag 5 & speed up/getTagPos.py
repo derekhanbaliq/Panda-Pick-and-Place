@@ -86,13 +86,11 @@ class Tag:
         """
 
         tag_name = []
-        H_ti_c = []
         H_tic_w = []
 
         for (name, pose) in detector.get_detections():
-            if tag_name != "tag0":
+            if name != "tag0":
                 tag_name.append(name)
-                # H_ti_c.append(pose)
                 H_tic_w.append(self.getTagCenterPos(H_t0_c, pose))
 
         return tag_name, H_tic_w
@@ -119,8 +117,8 @@ class Tag:
         elif tag_name == "tag5":
             print("down case! - TBD!!!!")
             H_rot = np.array([
-                [1, 0, 0, 0],
-                [0, -1, 0, 0],
+                [-1, 0, 0, 0],
+                [0, 1, 0, 0],
                 [0, 0, -1, 0],
                 [0, 0, 0, 1],
             ])
@@ -128,8 +126,8 @@ class Tag:
         elif tag_name == "tag6":
             print("up case!")
             H_rot = np.array([
-                [1, 0, 0, 0],
-                [0, -1, 0, 0],
+                [-1, 0, 0, 0],
+                [0, 1, 0, 0],
                 [0, 0, -1, 0],
                 [0, 0, 0, 1],
             ])
@@ -140,6 +138,7 @@ class Tag:
         """
             tower & rotate to standard parallel direction?
         """
+        print("tower i = {}".format(i))
 
         isRed = 1
         if team == 'blue':
@@ -151,7 +150,7 @@ class Tag:
             pass
 
         elif tag_name == "tag1" or tag_name == "tag2" or tag_name == "tag3" or tag_name == "tag4":
-            print("side case!")
+            # print("side case!")
             H_twr_w = np.array([  # define tower placement height
                 [0, 1, 0, .562],
                 [0, 0, 1, isRed * .169],
@@ -160,20 +159,20 @@ class Tag:
             ])
 
         elif tag_name == "tag5":
-            print("down case! - TBD too!!!!")
+            # print("down case! - TBD too!!!!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
                 [0, -1, 0, isRed * .169],
-                [0, 0, -1, .2 +  (i + 1) * 0.05 - 0.015],
+                [0, 0, -1, .2 + (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
 
         elif tag_name == "tag6":
-            print("up case!")
+            # print("up case!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
                 [0, -1, 0, isRed * .169],
-                [0, 0, -1, .2 +  (i + 1) * 0.05 - 0.015],
+                [0, 0, -1, .2 + (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
 
@@ -190,29 +189,29 @@ class Tag:
             pass
 
         elif tag_name == "tag1" or tag_name == "tag2" or tag_name == "tag3" or tag_name == "tag4":
-            print("side case!")
+            # print("side case!")
             H_twrUp = np.array([
-                [1, 0, 0, 0.2],
+                [1, 0, 0, 0.15],
                 [0, 1, 0, 0],
                 [0, 0, 1, 0],
                 [0, 0, 0, 1],
             ])
 
         elif tag_name == "tag5":
-            print("down case! - TBD too!!!!")
+            # print("down case! - TBD too!!!!")
             H_twrUp = np.array([
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
-                [0, 0, 1, -0.2],
+                [0, 0, 1, -0.1],
                 [0, 0, 0, 1],
             ])
 
         elif tag_name == "tag6":
-            print("up case!")
+            # print("up case!")
             H_twrUp = np.array([
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
-                [0, 0, 1, -0.2],
+                [0, 0, 1, -0.1],
                 [0, 0, 0, 1],
             ])
 
