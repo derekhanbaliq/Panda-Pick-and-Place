@@ -97,7 +97,7 @@ class Tag:
 
     def get_H_staticRot(self, tag_name):
         """
-            deal with the white face side case by case
+            deal with the white face side case by case for static case
         """
 
         H_rot = np.identity(4)
@@ -115,7 +115,7 @@ class Tag:
             ])
 
         elif tag_name == "tag5":
-            print("down case! - TBD!!!!")
+            print("down case!")
             H_rot = np.array([
                 [-1, 0, 0, 0],
                 [0, 1, 0, 0],
@@ -176,6 +176,23 @@ class Tag:
                 [0, 0, 0, 1],
             ])
 
+        else:
+            # print("dynamic up case!")
+            if team == "red":
+                H_twr_w = np.array([  # define tower placement height
+                    [0, -1, 0, .562],
+                    [0, 0, 1, .169],
+                    [-1, 0, 0, .2 + (i + 1) * 0.05 - 0.015],
+                    [0, 0, 0, 1],
+                ])
+            elif team == "blue":
+                H_twr_w = np.array([  # define tower placement height
+                    [0, 1, 0, .562],
+                    [0, 0, 1, -.169],
+                    [1, 0, 0, .2 + (i + 1) * 0.05 - 0.015],
+                    [0, 0, 0, 1],
+                ])
+
         return H_twr_w
 
     def get_H_twrUp(self, tag_name):
@@ -215,4 +232,39 @@ class Tag:
                 [0, 0, 0, 1],
             ])
 
+        else:
+            # print("dynamic case!")
+            H_twrUp = np.array([
+                [1, 0, 0, -0.2],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ])
+
         return H_twrUp
+
+    def get_H_dynamicRot(self, team):
+        """
+            dynamic case - all white faces up
+        """
+
+        H_rot = []
+
+        print("Dynamic Block case!")
+
+        if team == "red":
+            H_rot = np.array([
+                [0, 0, -1, 0],
+                [0, -1, 0, 0.5],
+                [-1, 0, 0, 0.25],
+                [0, 0, 0, 1]
+            ])
+        if team == "blue":
+            H_rot = np.array([
+                [0, 0, 1, 0],
+                [0, -1, 0, -0.5],
+                [1, 0, 0, 0.25],
+                [0, 0, 0, 1]
+            ])
+
+        return H_rot
