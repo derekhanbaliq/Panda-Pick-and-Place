@@ -20,7 +20,6 @@ from lib.rrt import rrt
 from lib.loadmap import loadmap
 
 from math import pi, sin, cos
-import math
 from time import perf_counter
 
 # instantiated object!
@@ -44,7 +43,7 @@ class Tag:
         self.H_tic_ti = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
-            [0, 0, 1, -0.025],  # half of the box side length
+            [0, 0, 1, -0.02],  # half of the box side length
             [0, 0, 0, 1],
         ])
 
@@ -91,8 +90,6 @@ class Tag:
         H_tic_w = []
 
         for (name, pose) in detector.get_detections():
-            print("H_name = {}".format(name))
-            # print("pose c = {}".format(pose))
             if tag_name != "tag0":
                 tag_name.append(name)
                 # H_ti_c.append(pose)
@@ -121,37 +118,12 @@ class Tag:
 
         elif tag_name == "tag5":
             print("down case! - TBD!!!!")
-
-            # H_1 = np.array([
-            #     [-1, 0, 0, 0],
-            #     [0, 1, 0, 0],
-            #     [0, 0, -1, 0],
-            #     [0, 0, 0, 1],
-            # ])
-
-            H_1 = np.array([
+            H_rot = np.array([
                 [1, 0, 0, 0],
                 [0, -1, 0, 0],
                 [0, 0, -1, 0],
                 [0, 0, 0, 1],
             ])
-
-            H_rotate = np.array([
-                [math.sqrt(1/2), 0, math.sqrt(1/2), 0],
-                [0, 1, 0, 0],
-                [-math.sqrt(1/2), 0, math.sqrt(1/2), 0],
-                [0, 0, 0, 1],
-            ])
-
-            H_translation = np.array([
-                [1, 0, 0, 0.1 * math.sqrt(1/2)],
-                [0, 1, 0, 0],
-                [0, 0, 1, -0.1 * math.sqrt(1/2)],
-                [0, 0, 0, 1],
-            ])
-
-            H_rot = H_1 @ H_rotate @ H_translation
-
 
         elif tag_name == "tag6":
             print("up case!")
@@ -164,10 +136,14 @@ class Tag:
 
         return H_rot
 
-    def get_H_twr_w(self, tag_name, i):
+    def get_H_twr_w(self, team, tag_name, i):
         """
             tower & rotate to standard parallel direction?
         """
+
+        isRed = 1
+        if team == 'blue':
+            isRed = -1
 
         H_twr_w = np.identity(4)
 
@@ -178,8 +154,8 @@ class Tag:
             print("side case!")
             H_twr_w = np.array([  # define tower placement height
                 [0, 1, 0, .562],
-                [0, 0, 1, .169],
-                [1, 0, 0, .2 + 0.005 + (i + 1) * 0.05],
+                [0, 0, 1, isRed * .169],
+                [1, 0, 0, .2 + (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
 
@@ -187,8 +163,8 @@ class Tag:
             print("down case! - TBD too!!!!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
-                [0, -1, 0, .169],
-                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
+                [0, -1, 0, isRed * .169],
+                [0, 0, -1, .2 +  (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
 
@@ -196,8 +172,8 @@ class Tag:
             print("up case!")
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
-                [0, -1, 0, .169],
-                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
+                [0, -1, 0, isRed * .169],
+                [0, 0, -1, .2 +  (i + 1) * 0.05 - 0.015],
                 [0, 0, 0, 1],
             ])
 
