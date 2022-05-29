@@ -22,113 +22,200 @@ from lib.loadmap import loadmap
 from math import pi, sin, cos
 from time import perf_counter
 
-
-def getTagPos(H_t0_c, H_ti_c):
-    """
-        input: 4x4 matrix - tag i frame with respect to camera frame
-        output: 4x4 matrix - tag i box's center frame with respect to world frame
-    """
-
-    H_t0_w = np.array([
-        [1, 0, 0, -0.500],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1],
-    ])
-
-    H_tic_ti = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, -0.025],  # half of the box side length
-        [0, 0, 0, 1],
-    ])
-
-    H_tic_w = H_t0_w @ np.linalg.inv(H_t0_c) @ H_ti_c @ H_tic_ti
-    # print(H_tic_w)
-
-    return H_tic_w
+# instantiated object!
+detector = ObjectDetector()
 
 
-if __name__ == "__main__":
+class Tag:
 
-    try:
-        team = rospy.get_param("team")  # 'red' or 'blue'
-    except KeyError:
-        print('Team must be red or blue - make sure you are running final.launch!')
-        exit()
+    def __init__(self):
+        """
+            H_t0_w & H_tic_ti: only used in get_H_t0_c()
+        """
 
-    rospy.init_node("team_script")
-    arm = ArmController()
-    detector = ObjectDetector()
+        self.H_t0_w = np.array([
+            [1, 0, 0, -0.500],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ])
 
-    arm.safe_move_to_position(arm.neutral_position())  # on your mark!
+        self.H_tic_ti = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, -0.025],  # half of the box side length
+            [0, 0, 0, 1],
+        ])
 
-    print("\n****************")
-    if team == 'blue':
-        print("** BLUE TEAM  **")
-    else:
-        print("**  RED TEAM  **")
-    print("****************")
-    input("\nWaiting for start... Press ENTER to begin!\n")  # get set!
-    print("Go!\n")  # go!
+        self.H_upc_tic = np.array([  # H - move to up box center 10cm
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, -0.1],
+            [0, 0, 0, 1],
+        ])
 
-    # STUDENT CODE HERE
+    def get_H_t0_c(self):
+        """
+            get H matrix of tag 0 with respect to camera frame
+        """
 
-    # 1 - get centers of boxes
+        H_t0_c = []
 
-    H_tic_w = []
-    H_name = []
+        for (name, pose) in detector.get_detections():
+            if name == "tag0":
+                H_t0_c = pose
+                # print("H_t0_c = {}".format(H_t0_c))
+                break
 
-    for (name, pose) in detector.get_detections():
-        if name == "tag0":
-            H_t0_c = pose
-            print("H_t0_c = {}".format(H_t0_c))
-            break
+        return H_t0_c
 
-    for (name, pose) in detector.get_detections():
-        print("H_name c = {}".format(name))
-        print("pose c = {}".format(pose))
-        H_tic_w.append(getTagPos(H_t0_c, pose))  # H_tic_w[0] is not usable!
-        H_name.append(name)
+    def getTagCenterPos(self, H_t0_c, H_ti_c):
+        """
+            input: 4x4 matrix - tag i frame with respect to camera frame
+            output: 4x4 matrix - tag i box's center frame with respect to world frame
+        """
 
-    print("*" * 100)
-    print("H_tic_w = {}".format(H_tic_w))
-    print("H_name = {}".format(H_name))
+        H_tic_w = self.H_t0_w @ np.linalg.inv(H_t0_c) @ H_ti_c @ self.H_tic_ti
+        # print(H_tic_w)
 
-    # 2 - ik_solver() test
+        return H_tic_w
 
-    ik = IK()
+    def get_tag_data(self, H_t0_c):
+        """
+            get tag_name & H_ti_c & H_tic_w without Tag0!!!!
+        """
 
-    H_rot_z = np.array([
-        [1, 0, 0, 0],
-        [0, -1, 0, 0],
-        [0, 0, -1, 0],
-        [0, 0, 0, 1],
-    ])
+        tag_name = []
+        H_ti_c = []
+        H_tic_w = []
 
-    target = H_tic_w[2] @ H_rot_z
-    seed = arm.neutral_position()  # use neutral configuration as seed
+        for (name, pose) in detector.get_detections():
+            print("H_name = {}".format(name))
+            # print("pose c = {}".format(pose))
+            if tag_name != "tag0":
+                tag_name.append(name)
+                # H_ti_c.append(pose)
+                H_tic_w.append(self.getTagCenterPos(H_t0_c, pose))
 
-    start = perf_counter()
-    q, success, rollout = ik.inverse(target, seed)
-    stop = perf_counter()
-    dt = stop - start
+        return tag_name, H_tic_w
 
-    if success:
-        print("Solution found in {time:2.2f} seconds ({it} iterations).".format(time=dt, it=len(rollout)))
-        # arm.safe_move_to_position(q)
-    else:
-        print('IK Failed for this target using this seed.')
+    def get_H_staticRot(self, tag_name):
+        """
+            deal with the white face side case by case
+        """
 
-    # 3 execute grip test
+        H_rot = np.identity(4)
 
-    arm.open_gripper()  # open gripper
-    arm.safe_move_to_position(q)  # ik_solver()
-    arm.exec_gripper_cmd(0.05, 10)
+        if tag_name == "tag0":
+            pass
 
-    arm.safe_move_to_position(seed)  # ik_solver()
+        elif tag_name == "tag1" or tag_name == "tag2" or tag_name == "tag3" or tag_name == "tag4":
+            print("side case!")
+            H_rot = np.array([
+                [0, 1, 0, 0],
+                [1, 0, 0, 0],
+                [0, 0, -1, 0],
+                [0, 0, 0, 1],
+            ])
 
-    # Move around...
-    # arm.safe_move_to_position(arm.neutral_position() + .1)
+        elif tag_name == "tag5":
+            print("down case! - TBD!!!!")
+            H_rot = np.array([
+                [1, 0, 0, 0],
+                [0, -1, 0, 0],
+                [0, 0, -1, 0],
+                [0, 0, 0, 1],
+            ])
 
-    # END STUDENT CODE
+        elif tag_name == "tag6":
+            print("up case!")
+            H_rot = np.array([
+                [1, 0, 0, 0],
+                [0, -1, 0, 0],
+                [0, 0, -1, 0],
+                [0, 0, 0, 1],
+            ])
+
+        return H_rot
+
+    def get_H_twr_w(self, team, tag_name, i):
+        """
+            tower & rotate to standard parallel direction?
+        """
+
+        isRed = 1
+        if team == 'blue':
+            isRed = -1
+
+        H_twr_w = np.identity(4)
+
+        if tag_name == "tag0":
+            pass
+
+        elif tag_name == "tag1" or tag_name == "tag2" or tag_name == "tag3" or tag_name == "tag4":
+            print("side case!")
+            H_twr_w = np.array([  # define tower placement height
+                [0, 1, 0, .562],
+                [0, 0, 1, isRed * .169],
+                [1, 0, 0, .2 + 0.005 + (i + 1) * 0.05],
+                [0, 0, 0, 1],
+            ])
+
+        elif tag_name == "tag5":
+            print("down case! - TBD too!!!!")
+            H_twr_w = np.array([  # define tower placement height
+                [1, 0, 0, .562],
+                [0, -1, 0, isRed * .169],
+                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
+                [0, 0, 0, 1],
+            ])
+
+        elif tag_name == "tag6":
+            print("up case!")
+            H_twr_w = np.array([  # define tower placement height
+                [1, 0, 0, .562],
+                [0, -1, 0, isRed * .169],
+                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
+                [0, 0, 0, 1],
+            ])
+
+        return H_twr_w
+
+    def get_H_twrUp(self, tag_name):
+        """
+            tower & rotate to standard parallel direction?
+        """
+
+        H_twrUp = np.identity(4)
+
+        if tag_name == "tag0":
+            pass
+
+        elif tag_name == "tag1" or tag_name == "tag2" or tag_name == "tag3" or tag_name == "tag4":
+            print("side case!")
+            H_twrUp = np.array([
+                [1, 0, 0, 0.2],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ])
+
+        elif tag_name == "tag5":
+            print("down case! - TBD too!!!!")
+            H_twrUp = np.array([
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, -0.2],
+                [0, 0, 0, 1],
+            ])
+
+        elif tag_name == "tag6":
+            print("up case!")
+            H_twrUp = np.array([
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, -0.2],
+                [0, 0, 0, 1],
+            ])
+
+        return H_twrUp

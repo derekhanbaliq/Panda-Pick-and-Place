@@ -255,6 +255,10 @@ class IK:
         rollout = []
         cnt = 0  # counter
 
+        # get joint limits
+        lower_limit = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
+        upper_limit = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
+
         while True:
 
             rollout.append(q)
@@ -285,7 +289,7 @@ class IK:
             project_dq_center = np.dot(dq_center, n) * (n / np.square(np.linalg.norm(n)))
             # print(np.linalg.norm(n))
 
-            dq = (dq_ik + project_dq_center*2)*0.08
+            dq = 0.08 * (dq_ik + 2 * project_dq_center)
 
             # 2 Termination Conditions
 
@@ -296,10 +300,17 @@ class IK:
                 break  # exit the while loop if conditions are met!
 
             # END STUDENT CODE
-            
+
             q = q + dq
-            
-            
+
+            # 2π revision
+            # for i in range(7):
+            #     while lower_limit[i] > q[i]:
+            #         print("q[i] is too small! - {}".format(q[i]))
+            #         q[i] = q[i] + 2 * pi
+            #     while upper_limit[i] < q[i]:
+            #         print("q[i] is too large! - {}".format(q[i]))
+            #         q[i] = q[i] - 2 * pi
 
         success = self.is_valid_solution(q, target)
         return q, success, rollout

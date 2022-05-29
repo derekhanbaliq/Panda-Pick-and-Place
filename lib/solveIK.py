@@ -7,13 +7,21 @@ from lib.calcJacobian import calcJacobian
 from lib.IK_velocity import IK_velocity
 
 
+from core.interfaces import ArmController
+
+
+# arm = ArmController()
+
+
 class IK:
     # JOINT LIMITS
     lower = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
     upper = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
 
     center = lower + (upper - lower) / 2  # compute middle of range of motion of each joint
+
     fk = FK()
+    # arm = ArmController()
 
     def __init__(self, linear_tol=1e-4, angular_tol=1e-3, max_steps=500, min_step_size=1e-5):
         """
@@ -255,6 +263,10 @@ class IK:
         rollout = []
         cnt = 0  # counter
 
+        # get joint limits
+        lower_limit = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])
+        upper_limit = np.array([2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973])
+
         while True:
 
             rollout.append(q)
@@ -285,7 +297,7 @@ class IK:
             project_dq_center = np.dot(dq_center, n) * (n / np.square(np.linalg.norm(n)))
             # print(np.linalg.norm(n))
 
-            dq = (dq_ik + project_dq_center*2)*0.08
+            dq = 0.5 * (dq_ik + 2 * project_dq_center)
 
             # 2 Termination Conditions
 
@@ -296,10 +308,22 @@ class IK:
                 break  # exit the while loop if conditions are met!
 
             # END STUDENT CODE
-            
+
             q = q + dq
-            
-            
+
+            # 2π revision
+            for i in range(7):
+                # while lower_limit[i] > q[i]:
+                #     print("q[i] is too small! - {}".format(q[i]))
+                #     q[i] = q[i] + 2 * pi
+                # while upper_limit[i] < q[i]:
+                #     print("q[i] is too large! - {}".format(q[i]))
+                #     q[i] = q[i] - 2 * pi
+                if lower_limit[i] > q[i] or upper_limit[i] < q[i]:
+                    q = np.array([0, 0, 0, -pi / 2, 0, pi / 2, pi / 4])
+                    cnt = 0
+                    print("Failed seed has changed to neutral pos seed, try it again!")
+                    break
 
         success = self.is_valid_solution(q, target)
         return q, success, rollout
