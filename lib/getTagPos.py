@@ -168,7 +168,7 @@ class Tag:
             ])
 
         elif tag_name == "tag6":
-            # print("up case!")
+            # print("up case!")lision detected. ArmController: Panda limb failed to reach commanded joint positio
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
                 [0, -1, 0, isRed * .169],
@@ -181,15 +181,16 @@ class Tag:
             if team == "red":
                 H_twr_w = np.array([  # define tower placement height
                     [0, -1, 0, .562],
-                    [0, 0, 1, .169],
-                    [-1, 0, 0, .2 + (i + 1) * 0.05 - 0.015],
+                    # [0, 0, 1, .169],
+                    [0, 0, 1, .18],  # dynamic offset!
+                    [-1, 0, 0, .2 + (i + 1) * 0.05 - 0.01],
                     [0, 0, 0, 1],
                 ])
             elif team == "blue":
                 H_twr_w = np.array([  # define tower placement height
-                    [0, 1, 0, .562],
-                    [0, 0, 1, -.169],
-                    [1, 0, 0, .2 + (i + 1) * 0.05 - 0.015],
+                    [0, -1, 0, .562],
+                    [0, 0, 1, -0.158],
+                    [-1, 0, 0, .2 + (i + 1) * 0.05 - 0.01],
                     [0, 0, 0, 1],
                 ])
 
@@ -261,9 +262,9 @@ class Tag:
             ]) 
         if team == "blue":
             H_rot = np.array([
-                [0, 0, 1, 0],
-                [0, -1, 0, -0.5],
-                [1, 0, 0, 0.25],
+                [0, 0, 1, -0.12],
+                [0, 1, 0, -0.6],
+                [-1, 0, 0, 0.21],
                 [0, 0, 0, 1]
             ])
 

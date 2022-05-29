@@ -81,9 +81,8 @@ def pick_and_place_tagx(team, tag_name, H_tic_w, i):
 
     # 4 - go to tower-up
     H_twr_w = tag.get_H_twr_w(team, tag_name, i)  # real height
-    target = H_twr_w @ tag.get_H_twrUp(tag_name)  # to tower & white face up -> to tower up
-    # q_tower_up = my_ik_move(target, q_static_up)
-    q_tower_up = my_ik_move(target, q_tower_up_ref_side)
+    target_twrUp = H_twr_w @ tag.get_H_twrUp(tag_name)  # to tower & white face up -> to tower up
+    q_tower_up = my_ik_move(target_twrUp, q_tower_up_ref_side)
     # q_tower_up_ref_side = arm.get_positions()
     # print("q_tower_up_ref_side? = {}".format(q_tower_up_ref_side))
 
@@ -94,6 +93,9 @@ def pick_and_place_tagx(team, tag_name, H_tic_w, i):
     # 6 - place and back to tower-up
     arm.open_gripper()  # open gripper
     arm.safe_move_to_position(q_tower_up)
+
+    side_flag = True
+    return q_tower_up, target_twrUp, side_flag
 
 
 def pick_and_place_tag6(team, H_tic_w, i, is_first_box=False):
@@ -135,10 +137,9 @@ def pick_and_place_tag6(team, H_tic_w, i, is_first_box=False):
 
     # 4 - go to tower-up
     H_twr_w = tag.get_H_twr_w(team, "tag6", i)  # real height
-    target = H_twr_w @ tag.get_H_twrUp("tag6")  # to tower & white face up -> to tower up
-    # q_tower_up = my_ik_move(target, q_static_up)
+    target_twrUp = H_twr_w @ tag.get_H_twrUp("tag6")  # to tower & white face up -> to tower up
     if is_first_box is False:
-        q_tower_up = my_ik_move(target, q_tower_up_ref_up)
+        q_tower_up = my_ik_move(target_twrUp, q_tower_up_ref_up)
     else:
         q_tower_up = q_tower_up_ref_up
         arm.safe_move_to_position(q_tower_up)
@@ -152,6 +153,9 @@ def pick_and_place_tag6(team, H_tic_w, i, is_first_box=False):
     # 6 - place and back to tower-up
     arm.open_gripper()  # open gripper
     arm.safe_move_to_position(q_tower_up)
+
+    side_flag = False
+    return q_tower_up, target_twrUp, side_flag
 
 
 def pick_and_place_first_box(team, tag_name, H_tic_w):
@@ -202,12 +206,13 @@ def dynamic_pick_and_place(team, i, dynamic_start):
                              -1.19063492])  # q_tower_up_ref_side
     else:
         H_sweep = np.array([
-            [0, 0, 1, 0],
-            [0, -1, 0, -0.73],
-            [1, 0, 0, 0.225],
+            [0, 0, 1, -0.12],
+            [0, 1, 0, -0.7108],
+            [-1, 0, 0, 0.24],
             [0, 0, 0, 1]
         ])
-        seed = np.array([-0.03222569, -1.16041228, -1.83640442, -2.1817086, 0.42630637, 1.99819784, -1.27256441])
+        seed = np.array([0.30514158, -1.20959833, -2.10273557, -1.52647057, 0.45937979, 1.61914452, 1.87945006])
+        seed_1 = np.array([0.30514158, -1.20959833, -2.10273557, -1.52647057, 0.45937979, 1.61914452, 1.87945006])
         seed_twr = np.array([-0.86048895, 0.4852505, 0.26522349, -1.3501621, 1.28036102, 0.99785097, -1.08143])
         # seed = arm.neutral_position()
 
@@ -230,32 +235,11 @@ def dynamic_pick_and_place(team, i, dynamic_start):
 
     # 2 - sweep H
     target_sweep = H_sweep
-    q_dynamic_2 = my_ik_move(target_sweep, seed)
-    # print("q_catch:\n", q_dynamic_2)
-
-    # if perf_counter() - dynamic_start < 60:
-    #     arm.neutral_position()
-    #     return isSucceed
-
-    # 3 - catch and check gripper
-    # arm.exec_gripper_cmd(0.045, 10)
-
-    # gripper_state = arm.get_gripper_state()
-    # # print("gripper_state = {}".format(gripper_state))
-    # gripper_position = gripper_state['position']
-    # # print("gripper_position = {}".format(gripper_position))
-    # gripper_dist = abs(gripper_position[1] + gripper_position[0])
-    # print("gripper_dist = {}".format(gripper_dist))
+    q_dynamic_2 = my_ik_move(target_sweep, seed_1)
+    print("q_catch:\n", q_dynamic_2)
 
     is_gripped = False  # suppose it didn't catch
     while is_gripped is False:
-
-        # gripper_state = arm.get_gripper_state()
-        # # print("gripper_state = {}".format(gripper_state))
-        # gripper_position = gripper_state['position']
-        # print("gripper_position = {}".format(gripper_position))
-        # gripper_dist = abs(gripper_position[1] + gripper_position[0])
-        # print("gripper_dist = {}".format(gripper_dist))
 
         if perf_counter() - dynamic_start <= 60:
             print("time is ok")
@@ -273,8 +257,8 @@ def dynamic_pick_and_place(team, i, dynamic_start):
 
                 start_time = perf_counter()
                 while perf_counter() - start_time < 4.5:  # whatever
-                    print("wait to grip again...")
-                    # pass
+                    # print("wait to grip again...")
+                    pass
 
                 arm.exec_gripper_cmd(0.045, 10)
 
@@ -282,6 +266,15 @@ def dynamic_pick_and_place(team, i, dynamic_start):
 
             elif 0.05 > gripper_dist > 0.03:
                 print("caught!")
+
+                # modify the catch
+                arm.open_gripper()
+                start_time = perf_counter()
+                while perf_counter() - start_time < 1.5:  # whatever
+                    print("wait to grip again...")
+                    # pass
+                arm.exec_gripper_cmd(0.045, 10)
+
                 is_gripped = True
                 isSucceed = True
 
@@ -306,7 +299,9 @@ def dynamic_pick_and_place(team, i, dynamic_start):
     if isSucceed is False:
         print("failed...")
         arm.open_gripper()
-        arm.neutral_position()
+        H_twr_w = tag.get_H_twr_w(team, "tag12", i)  # real height
+        target_twrUp = H_twr_w @ tag.get_H_twrUp("tag12")  # to tower & white face up -> to tower up
+        q_tower_up = my_ik_move(target_twrUp, seed_twr)
         return isSucceed
 
     print("succeeded!")
@@ -355,6 +350,9 @@ if __name__ == "__main__":
     # 0 - init
     tag = Tag()
     ik = IK()
+    last_q = []
+    last_H = []
+    last_flag = False
 
     # 1 - get data of box center
     H_t0_c = tag.get_H_t0_c()  # get H_t0_c
@@ -380,16 +378,45 @@ if __name__ == "__main__":
 
         if tag_name[i] == "tag1" or tag_name[i] == "tag2" or tag_name[i] == "tag3" or tag_name[i] == "tag4":
             print("static side pick & place!")
-            pick_and_place_tagx(team, tag_name[i], H_tic_w[i], floor_cnt + i)  # you have already towered the first box!
+            last_q, last_H, last_flag = pick_and_place_tagx(team, tag_name[i], H_tic_w[i],
+                                                            floor_cnt + i)  # you have already towered the first box!
 
         elif tag_name[i] == "tag5" or tag_name[i] == "tag6":
             print("static side pick & place!")
-            pick_and_place_tag6(team, H_tic_w[i], floor_cnt + i)  # you have already towered the first box!
+            last_q, last_H, last_flag = pick_and_place_tag6(team, H_tic_w[i],
+                                                            floor_cnt + i)  # you have already towered the first box!
 
         elif tag_name[i] == "tag7" or tag_name[i] == "tag8" or tag_name[i] == "tag9" or tag_name[i] == "tag10" or \
                 tag_name[i] == "tag11" or tag_name[i] == "tag12":
-            print("dynamic pick & place TBD!!!")
-            dynamic_start = perf_counter()
-            dynamic_pick_and_place(team, floor_cnt + i, dynamic_start)
+            print("dynamic pick & place!!!")
+
+            if team == "red":
+                if last_flag is True:
+                    print("last case is side case!")
+                    H_twrUp = np.array([
+                        [1, 0, 0, 0.05],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1],
+                    ])
+                    target = last_H @ H_twrUp
+                    my_ik_move(target, last_q)
+
+                elif last_flag is False:
+                    print("last case is up case!")
+                    H_twrUp = np.array([
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, -0.05],
+                        [0, 0, 0, 1],
+                    ])
+                    target = last_H @ H_twrUp
+                    my_ik_move(target, last_q)
+
+                dynamic_start = perf_counter()
+                dynamic_pick_and_place(team, floor_cnt + i, dynamic_start)
+
+            elif team == "blue":
+                print("no time to debug so we don't do this in blue!")
 
     # END STUDENT CODE !!!!!!!!!!!!!!!!!!!!!!!
