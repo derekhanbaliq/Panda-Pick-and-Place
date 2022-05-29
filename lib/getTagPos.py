@@ -44,7 +44,7 @@ class Tag:
         self.H_tic_ti = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
-            [0, 0, 1, -0.02],  # half of the box side length
+            [0, 0, 1, -0.025],  # half of the box side length
             [0, 0, 0, 1],
         ])
 
@@ -120,7 +120,7 @@ class Tag:
             ])
 
         elif tag_name == "tag5":
-            print("down case! - TBD!!!!")
+            print("down case!")
 
             # H_1 = np.array([
             #     [-1, 0, 0, 0],
@@ -153,12 +153,28 @@ class Tag:
             H_rot = H_1 @ H_rotate @ H_translation
 
 
-        elif tag_name == "tag6":
+        if tag_name == "tag6":
             print("up case!")
             H_rot = np.array([
                 [1, 0, 0, 0],
                 [0, -1, 0, 0],
                 [0, 0, -1, 0],
+                [0, 0, 0, 1],
+            ])
+
+        elif tag_name == "tag7" or tag_name == "tag8" or tag_name == "tag9" or tag_name == "tag10" or tag_name == "tag11" or tag_name == "tag12":
+            print("Dynamic Block case!")
+
+            # H_rot = np.array([
+            #     [0, 0, -1, 0.12],
+            #     [0, -1, 0, 0.7],
+            #     [-1, 0, 0, 0.15],
+            #     [0, 0, 0, 1],
+            # ])
+            H_rot = np.array([
+                [0, 0, -1, 0.10],
+                [0, -1, 0, 0.72],
+                [-1, 0, 0, 0.15],
                 [0, 0, 0, 1],
             ])
 
@@ -179,7 +195,7 @@ class Tag:
             H_twr_w = np.array([  # define tower placement height
                 [0, 1, 0, .562],
                 [0, 0, 1, .169],
-                [1, 0, 0, .2  + (i + 1) * 0.05 - 0.015],
+                [1, 0, 0, .2 + 0.005 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])
 
@@ -188,7 +204,7 @@ class Tag:
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
                 [0, -1, 0, .169],
-                [0, 0, -1, .2  + (i + 1) * 0.05 - 0.015],
+                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])
 
@@ -197,7 +213,7 @@ class Tag:
             H_twr_w = np.array([  # define tower placement height
                 [1, 0, 0, .562],
                 [0, -1, 0, .169],
-                [0, 0, -1, .2  + (i + 1) * 0.05 - 0.015],
+                [0, 0, -1, .2 + 0.01 + (i + 1) * 0.05],
                 [0, 0, 0, 1],
             ])
 
